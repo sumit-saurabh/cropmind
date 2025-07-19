@@ -1,12 +1,4 @@
-import uuid
-import json
-import base64
-import tempfile
 import os
-import time
-from collections import OrderedDict
-from PIL import Image
-import io
 from handlers.mandi_handler import (
     handle_mandi_nearby,
     handle_mandi_crop_price,
@@ -27,15 +19,10 @@ try:
 except ImportError:
     pass
 
-# Import firebase_functions only in deployed environment
-# if is_deployed_environment():
-#     from firebase_functions import https_fn
-# else:
-#     https_fn = MockHttpsFn()
 from firebase_functions import https_fn
 
 # Set bucket name from environment variable or default
-BUCKET_NAME = os.getenv('GCS_BUCKET', 'cropmind-89afe.appspot.com')
+BUCKET_NAME = os.getenv('GCS_BUCKET', 'cropmind-team')
 
 # Import Firestore, Storage, Vision, Gemini in both deployed and FORCE_REAL_API=true local runs
 if should_import_cloud_services():
@@ -50,7 +37,7 @@ if should_import_cloud_services():
     vision_client = None
     try:
         vision_client = vision.ImageAnnotatorClient()
-        genai.configure(api_key=os.getenv('GEMINI_API_KEY', 'your-gemini-api-key'))
+        genai.configure(api_key=os.getenv('GEMINI_API_KEY', 'gemini-api-key'))
     except Exception as e:
         print(f"Failed to initialize Google Cloud clients: {e}")
 
@@ -63,44 +50,74 @@ def use_mock_response(req):
         return req.get('X-Mock-Response', 'false').lower() == 'true'
     return False
 
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    return response
+
 # --- Google Cloud Functions endpoints ---
-@https_fn.on_request()
+@https_fn.on_request(memory=512)
 def ping_entry(req: https_fn.Request) -> https_fn.Response:
-    """GCF: /ping health check"""
-    return handle_ping_request(req)
+    if req.method == 'OPTIONS':
+        response = https_fn.Response('', status=204)
+        return add_cors_headers(response)
+    response = handle_ping_request(req)
+    return add_cors_headers(response)
 
 @https_fn.on_request(memory=512)
 def diagnose_crop_entry(req: https_fn.Request) -> https_fn.Response:
-    """GCF: /api/diagnose-crop"""
-    return handle_diagnose_request(req)
+    if req.method == 'OPTIONS':
+        response = https_fn.Response('', status=204)
+        return add_cors_headers(response)
+    response = handle_diagnose_request(req)
+    return add_cors_headers(response)
 
 @https_fn.on_request(memory=512)
 def diagnosis_history_entry(req: https_fn.Request) -> https_fn.Response:
-    """GCF: /api/diagnosis-history"""
-    return handle_diagnosis_history(req)
+    if req.method == 'OPTIONS':
+        response = https_fn.Response('', status=204)
+        return add_cors_headers(response)
+    response = handle_diagnosis_history(req)
+    return add_cors_headers(response)
 
 @https_fn.on_request(memory=512)
 def mandi_nearby_entry(req: https_fn.Request) -> https_fn.Response:
-    """GCF: /api/mandi-nearby"""
-    return handle_mandi_nearby(req)
+    if req.method == 'OPTIONS':
+        response = https_fn.Response('', status=204)
+        return add_cors_headers(response)
+    response = handle_mandi_nearby(req)
+    return add_cors_headers(response)
 
 @https_fn.on_request(memory=512)
 def mandi_crop_price_entry(req: https_fn.Request) -> https_fn.Response:
-    """GCF: /api/mandi-crop-price"""
-    return handle_mandi_crop_price(req)
+    if req.method == 'OPTIONS':
+        response = https_fn.Response('', status=204)
+        return add_cors_headers(response)
+    response = handle_mandi_crop_price(req)
+    return add_cors_headers(response)
 
 @https_fn.on_request(memory=512)
 def mandi_crop_trend_entry(req: https_fn.Request) -> https_fn.Response:
-    """GCF: /api/mandi-crop-trend"""
-    return handle_mandi_crop_trend(req)
+    if req.method == 'OPTIONS':
+        response = https_fn.Response('', status=204)
+        return add_cors_headers(response)
+    response = handle_mandi_crop_trend(req)
+    return add_cors_headers(response)
 
 @https_fn.on_request(memory=512)
 def mandi_details_entry(req: https_fn.Request) -> https_fn.Response:
-    """GCF: /api/mandi-details"""
-    return handle_mandi_details(req)
+    if req.method == 'OPTIONS':
+        response = https_fn.Response('', status=204)
+        return add_cors_headers(response)
+    response = handle_mandi_details(req)
+    return add_cors_headers(response)
 
 @https_fn.on_request(memory=512)
 def mandi_search_entry(req: https_fn.Request) -> https_fn.Response:
-    """GCF: /api/mandi-search"""
-    return handle_mandi_search(req)
+    if req.method == 'OPTIONS':
+        response = https_fn.Response('', status=204)
+        return add_cors_headers(response)
+    response = handle_mandi_search(req)
+    return add_cors_headers(response)
 
