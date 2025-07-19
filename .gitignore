@@ -72,3 +72,13 @@ node_modules/
 keys/
 *.json
 .env
+# Python bytecode
+__pycache__/
+
+# Python virtual environment
+venv/
+*.local
+
+# Ignore service account keys and all json files
+../keys/
+*.json

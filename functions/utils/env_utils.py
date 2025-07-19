@@ -2,18 +2,26 @@
 import os
 
 def is_local_environment():
-    """Check if running in local development environment, with override for real API testing."""
-    if os.getenv('FORCE_REAL_API', 'false').lower() == 'true':
-        return False
-    return os.getenv('FUNCTIONS_EMULATOR') is None and os.getenv('FUNCTION_TARGET') is None
+    env = os.getenv('ENV', os.getenv('ENVIRONMENT', 'production')).lower()
+    print(f"[ENV_UTILS] ENV/ENVIRONMENT: {env}")
+    result = env == 'local'
+    print(f"[ENV_UTILS] is_local_environment: {result}")
+    return result
 
 def is_deployed_environment():
-    """True only if running in Firebase Functions (not local, not FORCE_REAL_API)"""
-    return os.getenv('FUNCTIONS_EMULATOR') is not None or os.getenv('FUNCTION_TARGET') is not None
+    env = os.getenv('ENV', os.getenv('ENVIRONMENT', 'production')).lower()
+    print(f"[ENV_UTILS] ENV/ENVIRONMENT: {env}")
+    result = env == 'production'
+    print(f"[ENV_UTILS] is_deployed_environment: {result}")
+    return result
 
 def should_import_cloud_services():
-    """Determine if Google Cloud services should be imported."""
-    return is_deployed_environment() or os.getenv('FORCE_REAL_API', 'false').lower() == 'true'
+    force_real_api = os.getenv('FORCE_REAL_API', 'false').lower() == 'true'
+    deployed = is_deployed_environment()
+    print(f"[ENV_UTILS] FORCE_REAL_API: {force_real_api}, is_deployed_environment: {deployed}")
+    result = deployed or force_real_api
+    print(f"[ENV_UTILS] should_import_cloud_services: {result}")
+    return result
 
 class MockHttpsFn:
     class Request:
