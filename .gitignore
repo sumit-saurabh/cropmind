@@ -71,3 +71,4 @@ node_modules/
 # Ignore service account keys and all json files
 keys/
 *.json
+.env
