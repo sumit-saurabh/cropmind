@@ -1,0 +1,10 @@
+firebase_functions~=0.1.0
+python-dotenv
+google-cloud-vision
+google-cloud-aiplatform
+google-generativeai
+google-cloud-firestore
+Pillow
+google-cloud-storage>=1.32.0,<3.0.0
+firebase-admin
+protobuf>=3.20.2,<6.0.0dev
