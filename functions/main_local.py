@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request
 from dotenv import load_dotenv
 from handlers.ping_handler import handle_ping_request
 from handlers.mandi_handler import (
@@ -8,7 +8,15 @@ from handlers.mandi_handler import (
     handle_mandi_details,
     handle_mandi_search
 )
-from handlers.crop_diagnose_handler import (handle_diagnose_request, handle_diagnosis_history)
+from handlers.crop_diagnose_handler import (
+    handle_diagnose_request, 
+    handle_diagnosis_history,
+    handle_detect_animals
+    )
+
+from handlers.animal_detect_handler import handle_detect_animals
+from handlers.weather_handler import handle_weather_request
+
 
 import os
 import firebase_admin
@@ -18,7 +26,10 @@ from firebase_admin import initialize_app
 BUCKET_NAME = os.getenv('GCS_BUCKET', 'cropmind-89afe.appspot.com')
 
 if not firebase_admin._apps:
-    initialize_app(options={"storageBucket": BUCKET_NAME})
+    initialize_app(options={
+        "storageBucket": BUCKET_NAME,
+        "databaseURL": "https://cropmind-89afe-default-rtdb.asia-southeast1.firebasedatabase.app"
+    })
 
 load_dotenv()
 app = Flask(__name__)
@@ -54,6 +65,14 @@ def mandi_search():
 @app.route('/api/diagnosis-history', methods=['POST'])
 def diagnosis_history():
     return handle_diagnosis_history(request)
+
+@app.route('/api/detect-animal', methods=['POST'])
+def detect_animals_entry():
+    return handle_detect_animals(request)
+
+@app.route('/api/weather', methods=['GET', 'POST'])
+def weather():
+    return handle_weather_request(request)
 
 if __name__ == '__main__':
     print("🚀 Starting CropMind API server locally...")

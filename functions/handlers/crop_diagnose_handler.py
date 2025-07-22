@@ -64,7 +64,18 @@ DIAGNOSIS_SCHEMA_ORDER = {
 # --- Request validation ---
 def validate_diagnose_request(req, is_local=False):
     try:
-        if is_local:
+        if req.content_type and 'application/json' in req.content_type:
+            data = req.get_json(force=True, silent=True)
+            if not data:
+                return False, "ER105", "Invalid JSON", "Request body must be valid JSON", 400
+            if 'user_id' not in data:
+                return False, "ER101", "Missing user_id", "user_id is required", 400
+            if 'crop' not in data:
+                return False, "ER102", "Missing crop", "crop name is required", 400
+            if 'image_base64' not in data:
+                return False, "ER103", "Missing image_base64", "Base64-encoded image is required", 400
+            return True, None, None, None, None
+        elif is_local:
             if 'user_id' not in req.form:
                 return False, "ER101", "Missing user_id", "user_id is required", 400
             if 'crop' not in req.form:
@@ -84,13 +95,30 @@ def validate_diagnose_request(req, is_local=False):
                     return False, "ER103", "Missing image", "crop image is required", 400
                 return True, None, None, None, None
             else:
-                return False, "ER105", "Invalid content type", "multipart/form-data required", 400
+                return False, "ER105", "Invalid content type", "multipart/form-data or application/json required", 400
     except Exception as e:
         return False, "ER500", "Validation error", str(e), 500
 
+
 def extract_request_data(req, is_local=False):
     try:
-        if is_local:
+        if req.content_type and 'application/json' in req.content_type:
+            data = req.get_json(force=True, silent=True)
+            user_id = data['user_id']
+            crop_type = data['crop']
+            location = data.get('location', 'Unknown')
+            language = data.get('language', DEFAULT_LANGUAGE)
+            image_base64 = data.get('image_base64')
+            if not image_base64:
+                return False, "ER104", "Invalid image_base64", "image_base64 is required", 400, None
+            # Remove data URL prefix if present
+            if image_base64.startswith('data:image'):
+                image_base64 = image_base64.split(',', 1)[-1]
+            try:
+                image_bytes = base64.b64decode(image_base64)
+            except Exception:
+                return False, "ER104", "Invalid image_base64", "Could not decode base64 image", 400, None
+        elif is_local:
             user_id = req.form['user_id']
             crop_type = req.form['crop']
             location = req.form.get('location', 'Unknown')
@@ -106,7 +134,7 @@ def extract_request_data(req, is_local=False):
             image_file = files['image']
             image_bytes = image_file.read()
             language = form_data.get('language', DEFAULT_LANGUAGE)
-        if len(image_bytes) == 0:
+        if not image_bytes or len(image_bytes) == 0:
             return False, "ER104", "Invalid image", "Image file is empty", 400, None
         if language not in SUPPORTED_LANGUAGES:
             language = DEFAULT_LANGUAGE
@@ -469,3 +497,42 @@ def handle_diagnosis_history(req):
             ]))
         ])
         return ordered_json_response(err, status=500)
+
+def handle_diagnose_crop_json(req):
+    if not (req.content_type and 'application/json' in req.content_type):
+        return create_error_response(get_request_id(req), "ER105", "Invalid content type", "application/json required", 400)
+    try:
+        data = req.get_json(force=True, silent=True)
+        if not data:
+            return create_error_response(get_request_id(req), "ER105", "Invalid JSON", "Request body must be valid JSON", 400)
+        user_id = data.get('user_id')
+        crop_type = data.get('crop')
+        location = data.get('location', 'Unknown')
+        language = data.get('language', DEFAULT_LANGUAGE)
+        image_base64 = data.get('image_base64')
+        if not user_id or not crop_type or not image_base64:
+            return create_error_response(get_request_id(req), "ER106", "Missing required fields", "user_id, crop, and image_base64 are required", 400)
+        if image_base64.startswith('data:image'):
+            image_base64 = image_base64.split(',', 1)[-1]
+        try:
+            image_bytes = base64.b64decode(image_base64)
+        except Exception:
+            return create_error_response(get_request_id(req), "ER104", "Invalid image_base64", "Could not decode base64 image", 400)
+        # Validate language
+        if language not in SUPPORTED_LANGUAGES:
+            language = DEFAULT_LANGUAGE
+        request_data = {
+            'user_id': user_id,
+            'crop_type': crop_type,
+            'location': location,
+            'image_bytes': image_bytes,
+            'language': language
+        }
+        ordered_result = process_diagnosis_request(request_data)
+        return create_success_response(get_request_id(req), ordered_result)
+    except Exception as e:
+        return create_error_response(get_request_id(req), "ER500", "Internal server error", str(e), 500)
+
+# Import stubs for backward compatibility
+from handlers.animal_detect_handler import handle_detect_animals
+from handlers.weather_handler import handle_weather_request

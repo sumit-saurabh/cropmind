@@ -7,10 +7,12 @@ from handlers.mandi_handler import (
     handle_mandi_search
 )
 from handlers.ping_handler import handle_ping_request
-from handlers.crop_diagnose_handler import (handle_diagnose_request, handle_diagnosis_history)
+from handlers.crop_diagnose_handler import (handle_diagnose_request, handle_diagnosis_history, handle_diagnose_crop_json, handle_detect_animals)
 from utils.request_utils import (get_auth_token, validate_auth_token, get_request_id, get_field)
 from utils.response_utils import (create_error_response, create_success_response, ordered_json_response)
 from utils.env_utils import is_local_environment, is_deployed_environment, should_import_cloud_services, MockHttpsFn
+from handlers.animal_detect_handler import handle_detect_animals
+from handlers.weather_handler import handle_weather_request
 
 # Load .env for local development
 try:
@@ -33,7 +35,10 @@ if should_import_cloud_services():
     # Initialize Firebase Admin SDK only in deployed environment or real local
     import firebase_admin
     if not firebase_admin._apps:
-        initialize_app(options={"storageBucket": BUCKET_NAME})
+        initialize_app(options={
+            "storageBucket": BUCKET_NAME,
+            "databaseURL": "https://cropmind-89afe-default-rtdb.asia-southeast1.firebasedatabase.app"
+        })
     vision_client = None
     try:
         vision_client = vision.ImageAnnotatorClient()
@@ -53,7 +58,7 @@ def use_mock_response(req):
 def add_cors_headers(response):
     response.headers['Access-Control-Allow-Origin'] = '*'
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Mock-Response'
     return response
 
 # --- Google Cloud Functions endpoints ---
@@ -119,5 +124,29 @@ def mandi_search_entry(req: https_fn.Request) -> https_fn.Response:
         response = https_fn.Response('', status=204)
         return add_cors_headers(response)
     response = handle_mandi_search(req)
+    return add_cors_headers(response)
+
+@https_fn.on_request(memory=512)
+def diagnose_crop_json_entry(req: https_fn.Request) -> https_fn.Response:
+    if req.method == 'OPTIONS':
+        response = https_fn.Response('', status=204)
+        return add_cors_headers(response)
+    response = handle_diagnose_crop_json(req)
+    return add_cors_headers(response)
+
+@https_fn.on_request(memory=512)
+def detect_animals_entry(req: https_fn.Request) -> https_fn.Response:
+    if req.method == 'OPTIONS':
+        response = https_fn.Response('', status=204)
+        return add_cors_headers(response)
+    response = handle_detect_animals(req)
+    return add_cors_headers(response)
+
+@https_fn.on_request(memory=512)
+def weather_entry(req: https_fn.Request) -> https_fn.Response:
+    if req.method == 'OPTIONS':
+        response = https_fn.Response('', status=204)
+        return add_cors_headers(response)
+    response = handle_weather_request(req)
     return add_cors_headers(response)
 
