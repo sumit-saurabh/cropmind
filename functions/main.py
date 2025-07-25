@@ -13,6 +13,7 @@ from utils.response_utils import (create_error_response, create_success_response
 from utils.env_utils import is_local_environment, is_deployed_environment, should_import_cloud_services, MockHttpsFn
 from handlers.animal_detect_handler import handle_detect_animals
 from handlers.weather_handler import handle_weather_request
+from handlers.govt_insurance_handler import handle_govt_schemes, handle_insurance_options
 
 # Load .env for local development
 try:
@@ -148,5 +149,21 @@ def weather_entry(req: https_fn.Request) -> https_fn.Response:
         response = https_fn.Response('', status=204)
         return add_cors_headers(response)
     response = handle_weather_request(req)
+    return add_cors_headers(response)
+
+@https_fn.on_request(memory=512)
+def govt_schemes_entry(req: https_fn.Request) -> https_fn.Response:
+    if req.method == 'OPTIONS':
+        response = https_fn.Response('', status=204)
+        return add_cors_headers(response)
+    response = handle_govt_schemes(req)
+    return add_cors_headers(response)
+
+@https_fn.on_request(memory=512)
+def insurance_options_entry(req: https_fn.Request) -> https_fn.Response:
+    if req.method == 'OPTIONS':
+        response = https_fn.Response('', status=204)
+        return add_cors_headers(response)
+    response = handle_insurance_options(req)
     return add_cors_headers(response)
 

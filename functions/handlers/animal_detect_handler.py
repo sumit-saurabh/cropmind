@@ -89,6 +89,53 @@ def handle_detect_animals(req):
                 "alert_level": "none"
             }
         # Build event record
+        label_str = ", ".join(result["labels"]) if result["labels"] else None
+        # Fetch farm and farmer details from Firestore
+        farm_name = None
+        farm_address = None
+        farmer_id = None
+        farmer_language = 'en'
+        farmer_name = None
+        farmer_mobile = None
+        farm_doc = None
+        if should_import_cloud_services() and farm_id:
+            try:
+                # Try direct doc fetch
+                farm_doc_ref = firestore.client().collection('farms').document(farm_id)
+                farm_doc = farm_doc_ref.get()
+                if not farm_doc.exists:
+                    # Query by farm_id field if doc not found
+                    farm_query = firestore.client().collection('farms').where('farm_id', '==', farm_id).limit(1).get()
+                    if farm_query:
+                        farm_doc = farm_query[0]
+                if farm_doc and farm_doc.exists:
+                    farm_data = farm_doc.to_dict()
+                    farm_name = farm_data.get('name')
+                    farm_address = farm_data.get('address')
+                    farmer_id = farm_data.get('farmer_id')
+            except Exception as e:
+                logger.error(f"Could not fetch farm details: {e}")
+        farmer_doc = None
+        if should_import_cloud_services() and farmer_id:
+            try:
+                # Try direct doc fetch
+                farmer_doc_ref = firestore.client().collection('farmers').document(farmer_id)
+                farmer_doc = farmer_doc_ref.get()
+                if not farmer_doc.exists:
+                    # Query by farmer_id field if doc not found
+                    farmer_query = firestore.client().collection('farmers').where('farmer_id', '==', farmer_id).limit(1).get()
+                    if farmer_query:
+                        farmer_doc = farmer_query[0]
+                if farmer_doc and farmer_doc.exists:
+                    farmer_data = farmer_doc.to_dict()
+                    farmer_language = farmer_data.get('language', 'en')
+                    farmer_name = farmer_data.get('name')
+                    farmer_mobile = farmer_data.get('mobile')
+            except Exception as e:
+                logger.error(f"Could not fetch farmer details: {e}")
+        notification_message = build_notification_message(
+            result["status"], farm_id, camera_id, lat, lng, timestamp, farmer_language, label_str, farmer_name, farm_name, farm_address
+        )
         event_record = {
             "status": result["status"],
             "labels": result["labels"],
@@ -100,6 +147,13 @@ def handle_detect_animals(req):
             "camera_id": camera_id,
             "farm_id": farm_id,
             "image_url": image_url if image_url else None,
+            "notification_message": notification_message,
+            "farmer_id": farmer_id,
+            "farmer_language": farmer_language,
+            "farmer_name": farmer_name,
+            "farmer_mobile": farmer_mobile,
+            "farm_name": farm_name,
+            "farm_address": farm_address
         }
         logger.info(f"Event record to store: {event_record}")
         # Store in Firestore
@@ -117,8 +171,80 @@ def handle_detect_animals(req):
             else:
                 db.reference(f"/animal_alerts/general").push(event_record)
                 logger.info("Event pushed to /animal_alerts/general in Realtime Database")
+            # Send WhatsApp and SMS notifications only if animal detected
+            if result["status"] == "animal_detected":
+                try:
+                    user_phone = farmer_mobile or data.get('user_phone') or data.get('to') # fallback for demo
+                    notify_payload = {
+                        "message": notification_message,
+                        "to": user_phone
+                    }
+                    wa_resp = requests.post(
+                        "https://api-indwreiyca-uc.a.run.app/send-whatsapp-message",
+                        json=notify_payload,
+                        headers={"Content-Type": "application/json"},
+                        timeout=10
+                    )
+                    logger.info(f"WhatsApp notification sent: {wa_resp.status_code}, {wa_resp.text}")
+                    sms_resp = requests.post(
+                        "https://api-indwreiyca-uc.a.run.app/send-sms",
+                        json=notify_payload,
+                        headers={"Content-Type": "application/json"},
+                        timeout=10
+                    )
+                    logger.info(f"SMS notification sent: {sms_resp.status_code}, {sms_resp.text}")
+                except Exception as notify_err:
+                    logger.error(f"Failed to send WhatsApp/SMS notification: {notify_err}")
         return create_success_response(get_request_id(req), result)
     except Exception as e:
         logger.error(f"Exception in handle_detect_animals: {e}")
         logger.error(traceback.format_exc())
-        return create_error_response(get_request_id(req), "ER500", "Internal server error", str(e), 500) 
+        return create_error_response(get_request_id(req), "ER500", "Internal server error", str(e), 500)
+
+def build_notification_message(result, farm_id, camera_id, lat, lng, timestamp, lang, label_str=None, farmer_name=None, farm_name=None, farm_address=None):
+    """Builds a notification message in the preferred language, with salutation, name, and farm details."""
+    name_part = f"{farmer_name}, " if farmer_name else ""
+    farm_name_part = f" ({farm_name})" if farm_name else ""
+    address_part = f"\nAddress: {farm_address}" if farm_address else ""
+    if lang == 'hi':
+        if result == 'animal_detected' and label_str:
+            return (
+                f"प्रिय {name_part} नमस्ते!\n"
+                f"🚨 पशु अलर्ट! 🚨\n"
+                f"हमने आपके खेत{farm_name_part} ({farm_id or 'N/A'}) में {label_str.title()} का पता लगाया है।\n"
+                f"कैमरा: {camera_id or 'N/A'}\n"
+                f"स्थान: ({lat}, {lng})\n"
+                f"समय: {timestamp}\n"
+                f"{address_part}\n"
+                f"कृपया आवश्यक कार्रवाई करें।"
+            )
+        else:
+            return f"प्रिय {name_part}आपके खेत में कोई पशु नहीं मिला।"
+    elif lang == 'kn':
+        if result == 'animal_detected' and label_str:
+            return (
+                f"ಪ್ರಿಯ {name_part} ನಮಸ್ಕಾರ!\n"
+                f"🚨 ಪ್ರಾಣಿ ಎಚ್ಚರಿಕೆ! 🚨\n"
+                f"ನಾವು ನಿಮ್ಮ ಫಾರ್ಮ್{farm_name_part} ({farm_id or 'N/A'}) ನಲ್ಲಿ {label_str.title()} ಪತ್ತೆಹಚ್ಚಿದ್ದೇವೆ.\n"
+                f"ಕ್ಯಾಮೆರಾ: {camera_id or 'N/A'}\n"
+                f"ಸ್ಥಳ: ({lat}, {lng})\n"
+                f"ಸಮಯ: {timestamp}\n"
+                f"{address_part}\n"
+                f"ದಯವಿಟ್ಟು ಅಗತ್ಯ ಕ್ರಮಗಳನ್ನು ಕೈಗೊಳ್ಳಿ."
+            )
+        else:
+            return f"ಪ್ರಿಯ {name_part}ನಿಮ್ಮ ಫಾರ್ಮ್‌ನಲ್ಲಿ ಯಾವುದೇ ಪ್ರಾಣಿಗಳನ್ನು ಪತ್ತೆಹಚ್ಚಲಾಗಲಿಲ್ಲ."
+    else:  # Default to English
+        if result == 'animal_detected' and label_str:
+            return (
+                f"Dear {name_part} Hello!\n"
+                f"🚨 Animal Alert! 🚨\n"
+                f"We have detected {label_str.title()} in your farm{farm_name_part} ({farm_id or 'N/A'}).\n"
+                f"Camera: {camera_id or 'N/A'}\n"
+                f"Location: ({lat}, {lng})\n"
+                f"Time: {timestamp}\n"
+                f"{address_part}\n"
+                f"Please take necessary action."
+            )
+        else:
+            return f"Dear {name_part}No animals were detected in your farm." 

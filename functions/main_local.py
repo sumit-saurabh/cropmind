@@ -16,7 +16,8 @@ from handlers.crop_diagnose_handler import (
 
 from handlers.animal_detect_handler import handle_detect_animals
 from handlers.weather_handler import handle_weather_request
-
+from handlers.insurance_handler import handle_insurance_options
+from handlers.govt_insurance_handler import handle_govt_schemes 
 
 import os
 import firebase_admin
@@ -73,6 +74,14 @@ def detect_animals_entry():
 @app.route('/api/weather', methods=['GET', 'POST'])
 def weather():
     return handle_weather_request(request)
+
+@app.route('/api/govt-schemes', methods=['GET'])
+def govt_schemes():
+    return handle_govt_schemes(request)
+
+@app.route('/api/insurance-options', methods=['GET'])
+def insurance_options():
+    return handle_insurance_options(request)
 
 if __name__ == '__main__':
     print("🚀 Starting CropMind API server locally...")
