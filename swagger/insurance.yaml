@@ -1,0 +1,56 @@
+openapi: 3.0.1
+info:
+  title: Insurance Options API
+  description: Get available insurance options for farmers, including Zuno General Insurance products.
+  version: 1.0.0
+servers:
+  - url: https://insurance-options-entry-tng5kwj76q-uc.a.run.app
+paths:
+  /:
+    get:
+      summary: Get insurance options
+      description: |
+        Returns a list of available insurance options for farmers.
+      responses:
+        '200':
+          description: List of insurance options
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  requestId:
+                    type: string
+                    example: 43cec3e0-8ff6-4932-9808-e45f5ed3412c
+                  data:
+                    type: object
+                    properties:
+                      insurance_options:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            provider:
+                              type: string
+                              example: Zuno General Insurance
+                            product:
+                              type: string
+                              example: Zuno Crop Insurance
+                            description:
+                              type: string
+                              example: Comprehensive crop insurance for farmers covering natural calamities, pests, and diseases.
+                            sum_insured:
+                              type: string
+                              example: Up to ₹2,00,000 per acre
+                            premium:
+                              type: string
+                              example: Starting at ₹150 per acre
+                            contact:
+                              type: string
+                              example: 1800-123-4003
+                            website:
+                              type: string
+                              example: https://www.hizuno.com/miscellaneous-insurance 

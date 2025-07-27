@@ -13,8 +13,8 @@ from utils.response_utils import (create_error_response, create_success_response
 from utils.env_utils import is_local_environment, is_deployed_environment, should_import_cloud_services, MockHttpsFn
 from handlers.animal_detect_handler import handle_detect_animals
 from handlers.weather_handler import handle_weather_request
-from handlers.govt_insurance_handler import handle_govt_schemes, handle_insurance_options
-
+from handlers.govt_insurance_handler import handle_govt_schemes
+from handlers.insurance_handler import handle_insurance_options
 # Load .env for local development
 try:
     from dotenv import load_dotenv

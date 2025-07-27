@@ -1,0 +1,50 @@
+openapi: 3.0.1
+info:
+  title: Government Schemes API
+  description: Get available government schemes for farmers.
+  version: 1.0.0
+servers:
+  - url: https://govt-schemes-entry-tng5kwj76q-uc.a.run.app
+paths:
+  /:
+    get:
+      summary: Get government schemes
+      description: |
+        Returns a list of available government schemes for farmers.
+      responses:
+        '200':
+          description: List of government schemes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  requestId:
+                    type: string
+                    example: e0dddeb2-e24b-4b51-8be8-fadd34fad774
+                  data:
+                    type: object
+                    properties:
+                      schemes:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                              example: Pradhan Mantri Fasal Bima Yojana (PMFBY)
+                            description:
+                              type: string
+                              example: Crop insurance scheme for farmers to provide financial support in case of crop failure.
+                            eligibility:
+                              type: string
+                              example: All farmers growing notified crops in notified areas.
+                            benefits:
+                              type: string
+                              example: Coverage against crop loss due to natural calamities, pests, and diseases.
+                            apply_url:
+                              type: string
+                              example: https://pmfby.gov.in/ 

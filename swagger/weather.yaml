@@ -1,0 +1,119 @@
+openapi: 3.0.1
+info:
+  title: Weather API
+  description: Get weather and farming activity recommendations for a given latitude and longitude.
+  version: 1.0.0
+servers:
+  - url: https://weather-entry-tng5kwj76q-uc.a.run.app
+paths:
+  /:
+    get:
+      summary: Get weather and farming recommendations
+      description: |
+        Returns weather data and farming activity recommendations for the given latitude and longitude.
+      parameters:
+        - in: query
+          name: lat
+          schema:
+            type: number
+            example: 13.0621700
+          required: true
+          description: Latitude of the location
+        - in: query
+          name: lon
+          schema:
+            type: number
+            example: 77.4747700
+          required: true
+          description: Longitude of the location
+      responses:
+        '200':
+          description: Weather and farming activity data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  requestId:
+                    type: string
+                    example: de5cf01b-b6c5-4c84-acaf-0a01809efe9a
+                  data:
+                    type: object
+                    properties:
+                      activities:
+                        type: object
+                        properties:
+                          spray_timing:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                end_time:
+                                  type: integer
+                                  example: 1753126200
+                                recommendation:
+                                  type: string
+                                  example: BAD
+                                start_time:
+                                  type: integer
+                                  example: 1753122600
+                      currently:
+                        type: object
+                        properties:
+                          icon:
+                            type: string
+                            example: partly-cloudy-night
+                          precip_probability:
+                            type: number
+                            example: 1
+                          summary:
+                            type: string
+                            example: It is cloudy today.
+                          temperature:
+                            type: string
+                            example: "21"
+                          time:
+                            type: integer
+                            example: 1753207503
+                      daily:
+                        type: object
+                        properties:
+                          data:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                farming_activity:
+                                  type: object
+                                  additionalProperties:
+                                    type: boolean
+                                icon:
+                                  type: string
+                                  example: rain
+                                precip_probability:
+                                  type: number
+                                  example: 1
+                                summary:
+                                  type: string
+                                  example: It is cloudy today.
+                                sunset_time:
+                                  type: integer
+                                  example: 1753190340
+                                temperature_high:
+                                  type: string
+                                  example: "25"
+                                temperature_low:
+                                  type: string
+                                  example: "20"
+                                time:
+                                  type: integer
+                                  example: 1753165800
+                          icon:
+                            type: string
+                            example: rain
+                          summary:
+                            type: string
+                            example: No rain is forecast this week. 

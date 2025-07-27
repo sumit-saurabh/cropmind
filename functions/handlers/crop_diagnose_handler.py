@@ -533,6 +533,3 @@ def handle_diagnose_crop_json(req):
     except Exception as e:
         return create_error_response(get_request_id(req), "ER500", "Internal server error", str(e), 500)
 
-# Import stubs for backward compatibility
-from handlers.animal_detect_handler import handle_detect_animals
-from handlers.weather_handler import handle_weather_request

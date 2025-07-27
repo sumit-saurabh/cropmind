@@ -1,0 +1,155 @@
+openapi: 3.0.1
+info:
+  title: Mandi Crop Price API
+  description: Get mandi crop prices and recommendations for a given crop and location.
+  version: 1.0.0
+servers:
+  - url: https://mandi-crop-price-entry-tng5kwj76q-uc.a.run.app
+paths:
+  /:
+    post:
+      summary: Get mandi crop prices
+      description: |
+        Returns mandi crop prices and recommendations for a given crop and location.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                lat:
+                  type: number
+                  example: 13.02
+                lng:
+                  type: number
+                  example: 77.54
+                crop:
+                  type: string
+                  example: potato
+                limit:
+                  type: integer
+                  example: 3
+                user_id:
+                  type: string
+                  example: farmer_123
+                language:
+                  type: string
+                  example: hi
+      responses:
+        '200':
+          description: Mandi crop price data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  requestId:
+                    type: string
+                    example: c368126b-a5c0-4c0b-ae01-9ecdebd39e59
+                  data:
+                    type: object
+                    properties:
+                      user_id:
+                        type: string
+                        example: farmer_123
+                      mandis:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            mandi_id:
+                              type: string
+                              example: 86313
+                            mandi_name:
+                              type: string
+                              example: Yeshwanthpur Mandi
+                            distance_km:
+                              type: number
+                              example: 0.89
+                            address:
+                              type: string
+                              example: 38, 3rd Main Rd, APMC Yard, Yeshwanthpur, Bengaluru, Karnataka 560022
+                            open_time:
+                              type: string
+                              example: 6am–6pm
+                            mobile:
+                              type: string
+                              example: 8298739585
+                            crop:
+                              type: string
+                              example: आलू
+                            translations:
+                              type: object
+                              properties:
+                                hi:
+                                  type: string
+                                  example: आलू
+                                kn:
+                                  type: string
+                                  example: ಅಲೂಗಡ್ಡೆ
+                            type:
+                              type: string
+                              example: vegetable
+                            alert_flags:
+                              type: object
+                              properties:
+                                good_time_to_sell:
+                                  type: boolean
+                                  example: false
+                                drop_warning:
+                                  type: boolean
+                                  example: false
+                            last_updated:
+                              type: string
+                              example: 2025-07-27
+                            trend:
+                              type: string
+                              example: stable
+                            modal_price:
+                              type: number
+                              example: 1224
+                            min_price:
+                              type: number
+                              example: 1124
+                            slug:
+                              type: string
+                              example: potato
+                            name:
+                              type: string
+                              example: potato
+                            price_history:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  date:
+                                    type: string
+                                    example: 2025-07-25
+                                  modal_price:
+                                    type: number
+                                    example: 1259
+                            unit:
+                              type: string
+                              example: quintal
+                            source:
+                              type: string
+                              example: Agmarknet
+                            image_url:
+                              type: string
+                              example: https://your-bucket.com/images/potato.png
+                            predicted_price:
+                              type: number
+                              example: 1218
+                            max_price:
+                              type: number
+                              example: 1374
+                            confidence_score:
+                              type: number
+                              example: 0.92
+                      language:
+                        type: string
+                        example: hi 
