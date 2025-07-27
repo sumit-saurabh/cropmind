@@ -38,6 +38,11 @@ CropMind is an AI-powered agricultural assistant that combines **Vertex AI Visio
 - **Nearby Dealers**: Local agricultural supplier information
 - **Actionable Steps**: Step-by-step treatment instructions
 
+### **Architecture**
+![Layer Diagram](images/cropmind_architecture_layer.png)
+
+![Architecture Diagram](images/cropmind_architecture.png)
+
 ## 🚀 API Endpoints
 
 ### Health Check
@@ -135,13 +140,69 @@ Form Data:
 }
 ```
 
+### Animal Detection
+```bash
+POST /api/detect-animals
+Content-Type: application/json
+Authorization: your-token
+
+Body:
+{
+    "image_url": "https://<url-to-your-image.jpg>",
+    "lat": 13.06,
+    "lng": 77.47,
+    "timestamp": "2025-07-27T10:00:00Z",
+    "camera_id": "CAM_NORTH_4",
+    "farm_id": "FARM123"
+}
+```
+**Response (Success):**
+```json
+{
+  "status": "success",
+  "requestId": "req_12345",
+  "data": {
+    "message": "Animal detection processed and notification sent.",
+    "firestore_doc_id": "doc_id_from_firestore",
+    "realtime_db_path": "/animal_alerts/FARM123/alert_id_from_rtdb"
+  }
+}
+```
+
+### Weather Advisory
+```bash
+GET /api/weather?lat=13.06&lon=77.47
+Authorization: your-token
+```
+**Response:**
+*Returns a detailed weather and activity forecast JSON object from the PEAT-cloud API.*
+
+### Government Schemes
+```bash
+GET /api/govt-schemes
+Authorization: your-token
+```
+**Response:**
+*Returns a list of dummy government schemes like PMFBY, PMKSY, etc.*
+
+### Insurance Options
+```bash
+GET /api/insurance-options
+Authorization: your-token
+```
+**Response:**
+*Returns a list of dummy insurance options, including from Zuno General Insurance.*
+
+
 ## 🛠️ Technology Stack
 
 - **Backend**: Firebase Functions (Python)
 - **AI/ML**: 
   - Google Vertex AI Vision API
   - Gemini Pro Vision
-- **Database**: Firestore
+- **Database**: 
+  - Firestore
+  - Firebase Realtime Database
 - **Storage**: Google Cloud Storage
 - **Authentication**: Firebase Auth
 - **Deployment**: Firebase CLI
@@ -234,10 +295,12 @@ Pillow
 ## 🧪 Testing
 
 ### Local Testing
+Start the local Flask server for testing:
 ```bash
 cd functions
-python main.py
+python main_local.py
 ```
+The server will start on `http://localhost:5000`.
 
 ### API Testing
 ```bash
@@ -252,6 +315,19 @@ curl -X POST "https://us-central1-cropmind-89afe.cloudfunctions.net/diagnose_cro
   -F "crop=tomato" \
   -F "user_id=farmer_123" \
   -F "location=Bengaluru"
+
+# Animal Detection
+curl --location 'http://localhost:5000/api/detect-animals' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: your-token' \
+--data '{
+    "image_url": "https://<url-to-your-image.jpg>",
+    "lat": 13.06,
+    "lng": 77.47,
+    "timestamp": "2025-07-27T10:00:00Z",
+    "camera_id": "CAM_NORTH_4",
+    "farm_id": "FARM123"
+}'
 ```
 
 ## 🏆 Hackathon Impact
@@ -289,8 +365,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 📞 Support
 
 For support and questions:
-- Email: support@cropmind.ai
-- GitHub Issues: [Create an issue](https://github.com/your-repo/issues)
+- Email: sumitsaurabh2293@gmail.com
+- GitHub Issues: [Create an issue](https://github.com/sumit-saurabh/cropmind/issues)
 
 ---
 
