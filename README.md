@@ -1,6 +1,7 @@
 # 🌾 CropMind - AI-Powered Agricultural Disease Diagnosis
 
 An intelligent Firebase Function that provides comprehensive crop disease diagnosis using AI, helping Indian farmers make informed decisions for better crop management.
+Deck - https://docs.google.com/presentation/d/1ewaK-xvdzjipBi5im1ouSw_F6_fOpUkxGtb-0SqlwTI/edit?usp=sharing
 
 ## 🎯 Project Overview
 
